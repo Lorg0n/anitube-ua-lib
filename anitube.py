@@ -85,6 +85,49 @@ class AniTube:
     def __init__(self):
         self.url = 'https://anitube.in.ua'
 
+    def search_anime(self, search, limit=5):
+        anime_list = []
+        data = session.post(f'{self.url}/anime/', params={
+            'do': 'search',
+            'subaction': 'search',
+            'story': search
+        })
+        articles = get_articles(data)
+        try:
+            for page in range(1, math.ceil(limit / len(articles)) + 1):
+                articles = get_articles(
+                    session.post(f'{self.url}/anime/', {
+                        'do': 'search',
+                        'subaction': 'search',
+                        'story': search,
+                        'from_page': page,
+                    })
+                )
+
+                if not articles:
+                    raise BreakLoops
+
+                for article in articles:
+                    name = article.find('h2', {'itemprop': 'name'}).a.text
+                    url = article.find('h2', {'itemprop': 'name'}).a['href']
+                    descr = article.find('div', {'class': 'story_c_text'}).text
+                    poster = f"{self.url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
+                    rating = [
+                        float(x) for x in
+                        re.findall(r'\d+\.?\d*', article.find('div', {'class': 'div1'}).text)
+                    ]
+
+                    anime = Anime(name, poster, url, descr, {'score': rating[0], 'max': rating[1], 'votes': rating[2]})
+                    anime_list.append(anime)
+
+                    if len(anime_list) == limit:
+                        raise BreakLoops
+
+        except BreakLoops:
+            pass
+
+        return anime_list
+
     def get_animes(
             self,
             types=None,
@@ -109,13 +152,12 @@ class AniTube:
         }
 
         anime_list = []
-        articles = get_articles(session, get_url(f'{self.url}/f/', params))
+        articles = get_articles(session.get(get_url(f'{self.url}/f/', params)))
 
         try:
             for page in range(1, math.ceil(limit / len(articles)) + 1):
                 articles = get_articles(
-                    session,
-                    get_url(f'{self.url}/f/', params, page)
+                    session.get(get_url(f'{self.url}/f/', params, page))
                 )
 
                 if not articles:
@@ -143,8 +185,7 @@ class AniTube:
         return anime_list
 
 
-def get_articles(session, url):
-    response = session.get(url)
+def get_articles(response):
     soup = BeautifulSoup(response.content, 'html.parser')
     articles = soup.find('div', {'id': 'dle-content'}).find_all('article', {'class': 'story'})
 
