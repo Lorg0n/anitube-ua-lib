@@ -21,7 +21,7 @@ class Episode:
 
 
 class Playlist:
-    def __init__(self, m):
+    def __init__(self, m: []):
         self.episodes = m
 
     def filter(self, voices=[], players=[]):
@@ -35,6 +35,21 @@ class Playlist:
             lambda e: check_voice(e) and check_player(e),
             self.episodes)
         return Playlist(filtered)
+
+    def sort(self, ascending=False, reverse=False):
+        episodes = self.episodes
+
+        def get_ascending(e):
+            number = int(re.findall(r'\d+', e.name)[0])
+            return number
+
+        if ascending:
+            episodes = sorted(episodes, key=get_ascending)
+
+        if reverse:
+            episodes = sorted(episodes, reverse=reverse)
+
+        return Playlist(episodes)
 
     def __str__(self):
         return f'Playlist: [{", ".join(str(e) for e in self.episodes)}]'
@@ -228,7 +243,6 @@ def get_url(url, params=None, page=1):
 def get_value(value, separator):
     if value is None:
         return None
-
     return separator.join(str(x) for x in value)
 
 
