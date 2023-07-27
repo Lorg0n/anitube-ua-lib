@@ -17,7 +17,30 @@ class Episode:
         self.voice = voice
 
     def __str__(self):
-        return f'<anitube.Episode: "{self.name}", "{self.url}">'
+        return f'<anitube.Episode: "{self.name}">'
+
+
+class Playlist:
+    def __init__(self, m):
+        self.episodes = m
+
+    def filter(self, voices=[], players=[]):
+        def check_voice(episode):
+            return episode.voice in voices or not voices
+
+        def check_player(episode):
+            return episode.player in players or not players
+
+        filtered = filter(
+            lambda e: check_voice(e) and check_player(e),
+            self.episodes)
+        return Playlist(filtered)
+
+    def __str__(self):
+        return f'Playlist: [{", ".join(str(e) for e in self.episodes)}]'
+
+    def __iter__(self):
+        return iter(self.episodes)
 
 
 class Anime:
@@ -42,7 +65,7 @@ class Anime:
         imgs_tag = screen_div.find_all('img')
         return [img['src'] for img in imgs_tag]
 
-    def get_voices(self,):
+    def get_voices(self, ):
         news_id = self.url.split('/')[-1].split('-')[0]
         data = session.get(
             f"https://anitube.in.ua/engine/ajax/playlists.php",
@@ -76,9 +99,11 @@ class Anime:
                     for p in range(len(args[1])):
                         for e in range(len(args[1][p])):
                             item = args[1][p][e]
-                            ep = Episode(name=item['name'], url=BeautifulSoup(item['code'], 'html.parser').find('iframe')['src'], player=args[0][p])
+                            ep = Episode(name=item['name'],
+                                         url=BeautifulSoup(item['code'], 'html.parser').find('iframe')['src'],
+                                         player=args[0][p])
                             episodes.append(ep)
-        return episodes
+        return Playlist(episodes)
 
 
 class AniTube:
