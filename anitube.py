@@ -21,8 +21,36 @@ class Episode:
 
 
 class Playlist:
-    def __init__(self, m: []):
-        self.episodes = m
+    def __init__(self, episodes):
+        self._episodes = episodes
+        self._available_voices = None
+        self._available_players = None
+
+    @property
+    def available_players(self):
+        if self._available_players is None:
+            self._available_players = self._get_available_players()
+        return self._available_players
+
+    def _get_available_players(self):
+        players = []
+        for episode in self._episodes:
+            if episode.player not in players:
+                players.append(episode.player)
+        return players
+
+    @property
+    def available_voices(self):
+        if self._available_voices is None:
+            self._available_voices = self._get_available_voices()
+        return self._available_voices
+
+    def _get_available_voices(self):
+        voices = []
+        for episode in self._episodes:
+            if episode.voice not in voices:
+                voices.append(episode.voice)
+        return voices
 
     def filter(self, voices=[], players=[]):
         def check_voice(episode):
@@ -33,11 +61,11 @@ class Playlist:
 
         filtered = filter(
             lambda e: check_voice(e) and check_player(e),
-            self.episodes)
+            self._episodes)
         return Playlist(filtered)
 
     def sort(self, ascending=False, reverse=False):
-        episodes = self.episodes
+        episodes = self._episodes
 
         def get_ascending(e):
             number = int(re.findall(r'\d+', e.name)[0])
@@ -52,10 +80,10 @@ class Playlist:
         return Playlist(episodes)
 
     def __str__(self):
-        return f'Playlist: [{", ".join(str(e) for e in self.episodes)}]'
+        return f'Playlist: [{", ".join(str(e) for e in self._episodes)}]'
 
     def __iter__(self):
-        return iter(self.episodes)
+        return iter(self._episodes)
 
 
 class Anime:
@@ -80,7 +108,7 @@ class Anime:
         imgs_tag = screen_div.find_all('img')
         return [img['src'] for img in imgs_tag]
 
-    def get_voices(self, ):
+    def get_voices(self):
         news_id = self.url.split('/')[-1].split('-')[0]
         data = session.get(
             f"https://anitube.in.ua/engine/ajax/playlists.php",
