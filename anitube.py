@@ -284,36 +284,34 @@ class AniTube:
 
         anime_list = []
         articles = _get_articles(self.__session.get(_get_url(f'{self._url}/f/', params)))
+        if len(articles) > 0:
+            try:
+                for page in range(1, math.ceil(limit / len(articles)) + 1):
+                    articles = _get_articles(
+                        self.__session.get(_get_url(f'{self._url}/f/', params, page))
+                    )
 
-        try:
-            for page in range(1, math.ceil(limit / len(articles)) + 1):
-                articles = _get_articles(
-                    self.__session.get(_get_url(f'{self._url}/f/', params, page))
-                )
-
-                if not articles:
-                    raise BreakLoops
-
-                for article in articles:
-                    name = article.find('h2', {'itemprop': 'name'}).a.text
-                    url = article.find('h2', {'itemprop': 'name'}).a['href']
-                    descr = article.find('div', {'class': 'story_c_text'}).text
-                    poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
-                    rating = [
-                        float(x) for x in
-                        re.findall(r'\d+\.?\d*', article.find('div', {'class': 'div1'}).text)
-                    ]
-
-                    anime = Anime(self.__session, name, poster, url, descr,
-                                  {'score': rating[0], 'max': rating[1], 'votes': rating[2]})
-                    anime_list.append(anime)
-
-                    if len(anime_list) == limit:
+                    if not articles:
                         raise BreakLoops
 
-        except BreakLoops:
-            pass
+                    for article in articles:
+                        name = article.find('h2', {'itemprop': 'name'}).a.text
+                        url = article.find('h2', {'itemprop': 'name'}).a['href']
+                        descr = article.find('div', {'class': 'story_c_text'}).text
+                        poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
+                        rating = [
+                            float(x) for x in
+                            re.findall(r'\d+\.?\d*', article.find('div', {'class': 'div1'}).text)
+                        ]
 
+                        anime = Anime(self.__session, name, poster, url, descr,
+                                      {'score': rating[0], 'max': rating[1], 'votes': rating[2]})
+                        anime_list.append(anime)
+
+                        if len(anime_list) == limit:
+                            raise BreakLoops
+            except BreakLoops:
+                pass
         return anime_list
 
 

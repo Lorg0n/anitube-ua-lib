@@ -10,32 +10,43 @@
 
 ## Examples
 ```python
-from anitube import AniTube
+import anitube as at
 
-api = AniTube()
+api = at.AniTube()
+category_a = at.Category('Антиутопія')
+category_b = 16  # Драма
+anime_list = api.get_anime(cat=[category_a, category_b])
 
-for anime in api.get_animes(limit=5):
+for anime in anime_list:
     print(anime.name)
 
-# Мрійливий хлопець - реаліст
-# Мій щасливий шлюб
-# Блукач Кеншін: Романтичне сказання про мечника епохи Мейджі
-# Повсякденне життя безсмертного короля (Сезон 2)
-# Зом 100: Сотня справ, які треба зробити перш ніж стати зомбаком
+# Богиня з косичками
+# Подорож Кіно. Чарівний світ (2 сезон)
 ```
 
 ```python
-from anitube import AniTube
+import anitube as at
 
-api = AniTube()
+api = at.AniTube()
+anime_list = api.search_anime("Я ПЕРЕРОДИВСЯ В ТОРГОВИЙ АВТОМАТ І ТЕПЕР БЛУКАЮ ПІДЗЕМЕЛЛЯМ")
 
-animes = api.search_anime(search="Демон", limit=5)
-for anime in animes:
+for anime in anime_list:
     print(anime.name)
+    playlist = anime.get_voices()
+    for ep in playlist:
+        print(f'- {ep.name}')
 
-# Демоничка з нашого району
-# 3х3 Ока: Легенда про Божественного Демона
-# Однокімнатка героя та лорд-демона 1 рівня
-# Клинок, який знищує демонів: Арка селище ковалів (3 сезон)
-# Полювання короля демонів на свою дружину
+# Я переродився в торговий автомат і тепер блукаю підземеллям
+# - 1 серія 
+# ...
+# - 4 серія
+# Коли я переродився слизом (ОВА)
+# - Епізод 1 - Гей! Дупці!
+# ...
+# - Епізод 5 - Солодке життя вчителя Рімуру (частина 3)
+# Коли я переродився слизом / Про моє переродження в слиз
+# - Серія 1: Штормовий Дракон Вельдора
+# ...
+# - Серія 24: Куро та Маска
+# - Серія 24.5: Оповіді: Щоденник Вельдори
 ```
