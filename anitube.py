@@ -2,6 +2,7 @@ import json
 import math
 import re
 from datetime import timedelta
+from enum import Enum
 
 import requests_cache
 from bs4 import BeautifulSoup
@@ -47,17 +48,17 @@ class Category:
         7: "Шьонен"
     }
 
-    def __init__(self, x):
-        if isinstance(x, int):
-            if x in self.__cat:
-                self.cat = x
-                self.string = self.__cat[x]
+    def __init__(self, genre):
+        if isinstance(genre, int):
+            if genre in self.__cat:
+                self.cat = genre
+                self.string = self.__cat[genre]
             else:
                 raise TypeError("There is no such category")
 
-        elif isinstance(x, str):
-            self.cat = self.__get_cat(x)
-            self.string = x
+        elif isinstance(genre, str):
+            self.cat = self.__get_cat(genre)
+            self.string = genre
 
     def __str__(self):
         return str(self.cat)
@@ -69,78 +70,13 @@ class Category:
         raise TypeError("There is no such category")
 
 
-class Episode:
-    def __init__(self, session, name, url, player, voice=""):
-        self.__session = session
-        self.name = name
-        self.url = url
-        self.player = player
-        self.voice = voice
-
-    def __str__(self):
-        return f'<anitube.Episode: "{self.name}">'
-
-
 class Playlist:
-    def __init__(self, session, episodes):
+    def __init__(self, session, structure: json):
         self.__session = session
-        self._episodes = episodes
-        self._available_voices = None
-        self._available_players = None
-
-    def get_available_players(self):
-        if self._available_players is None:
-            players = []
-            for episode in self._episodes:
-                if episode.player not in players:
-                    players.append(episode.player)
-            self._available_players = players
-            return players
-
-        return self._available_players
-
-    def get_available_voices(self):
-        if self._available_voices is None:
-            voices = []
-            for episode in self._episodes:
-                if episode.voice not in voices:
-                    voices.append(episode.voice)
-            self._available_voices = voices
-            return voices
-        return self._available_voices
-
-    def filter(self, voices=[], players=[]):
-        def check_voice(episode):
-            return episode.voice in voices or not voices
-
-        def check_player(episode):
-            return episode.player in players or not players
-
-        filtered = filter(
-            lambda e: check_voice(e) and check_player(e),
-            self._episodes)
-        return Playlist(self.__session, filtered)
-
-    def sort(self, ascending=False, reverse=False):
-        episodes = self._episodes
-
-        def get_ascending(e):
-            number = int(re.findall(r'\d+', e.name)[0])
-            return number
-
-        if ascending:
-            episodes = sorted(episodes, key=get_ascending)
-
-        if reverse:
-            episodes = sorted(episodes, reverse=reverse)
-
-        return Playlist(self.__session, episodes)
+        self.json = structure
 
     def __str__(self):
-        return f'Playlist: [{", ".join(str(e) for e in self._episodes)}]'
-
-    def __iter__(self):
-        return iter(self._episodes)
+        return f'<Playlist: {self.__hash__(), len(self.json)}>'
 
 
 class Anime:
@@ -173,25 +109,24 @@ class Anime:
             params={'news_id': news_id, 'xfield': 'playlist'}
         ).json()
 
-        episodes = []
         if data['success']:
             soup = BeautifulSoup(data['response'], 'html.parser')
+            arr = soup.find_all('li', {'data-id': True, 'data-file': True})
+            result = {}
+            for item in arr:
+                keys = item['data-id'].split('_')
+                first_key = f"{keys[0]}_{keys[1]}"
+                m = [first_key] + [f"{first_key}_{key}" for key in keys[2:]]
+                m = [soup.find('li', {'data-id': e}).text for e in m]
+                m.append(item.text)
+                _set_nested(result, m, item['data-file'])
 
-            for item in soup.find_all('li', {'data-id': True, 'data-file': True}):
-                player = soup.find('li', {'data-id': item['data-id']}).text
-                voice_id = item['data-id'].split('_')[:2]
-                voice = soup.find('li', {'data-id': '_'.join(voice_id)}).text
+            return Playlist(session=self.__session, structure=result)
 
-                episodes.append(Episode(
-                    session=self.__session,
-                    name=item.text,
-                    url=item['data-file'],
-                    player=player,
-                    voice=voice
-                ))
         else:
             data = self.__session.get(self.url)
             soup = BeautifulSoup(data.content, 'html.parser')
+            result = {}
 
             for script in soup.find_all('script'):
                 js_code = script.text
@@ -201,13 +136,9 @@ class Anime:
                     for p in range(len(args[1])):
                         for e in range(len(args[1][p])):
                             item = args[1][p][e]
-                            episodes.append(Episode(
-                                session=self.__session,
-                                name=item['name'],
-                                url=BeautifulSoup(item['code'], 'html.parser').find('iframe')['src'],
-                                player=args[0][p]
-                            ))
-        return Playlist(self.__session, episodes)
+                            _set_nested(result, [args[0][p], item['name']], BeautifulSoup(item['code'], 'html.parser').find('iframe')['src'])
+
+            return Playlist(self.__session, result)
 
 
 class AniTube:
@@ -313,6 +244,12 @@ class AniTube:
             except BreakLoops:
                 pass
         return anime_list
+
+
+def _set_nested(d, keys, value):
+    for key in keys[:-1]:
+        d = d.setdefault(key, {})
+    d[keys[-1]] = value
 
 
 def _get_articles(response):
