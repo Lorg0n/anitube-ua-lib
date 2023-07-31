@@ -10,54 +10,54 @@ from bs4 import BeautifulSoup
 
 class Category:
     __cat = {
-        70: "Антиутопія",
-        73: "Бойове мистецтво",
-        52: "Бойовик",
-        10: "Буденність",
-        14: "Готика",
-        19: "Детектив",
-        16: "Драма",
-        65: "Еротика",
-        15: "Еччі",
-        4: "Жахи",
-        29: "Зомбі",
-        81: "Ісекай",
-        60: "Історія",
-        62: "Казка",
-        5: "Комедія",
-        61: "Кіберпанк",
-        58: "Комодо",
-        57: "Махо-шьоджьо",
-        9: "Меха",
-        20: "Містика",
-        56: "Музичний",
-        68: "Надприродне",
-        47: "Пародія",
-        3: "Пригоди",
-        69: "Психологія",
-        45: "Постапокаліптика",
-        11: "Романтика",
-        12: "Спорт",
-        55: "Шьоджьо-аї",
-        59: "Шьонен-аї",
-        21: "Триллер",
-        41: "Фантастика",
-        6: "Фентезі",
-        22: "Школа",
-        49: "Шьоджьо",
-        7: "Шьонен"
+        "70": "антиутопія",
+        "73": "бойове мистецтво",
+        "52": "бойовик",
+        "10": "буденність",
+        "14": "готика",
+        "19": "детектив",
+        "16": "драма",
+        "65": "еротика",
+        "15": "еччі",
+        "4": "жахи",
+        "29": "зомбі",
+        "81": "ісекай",
+        "60": "історія",
+        "62": "казка",
+        "5": "комедія",
+        "61": "кіберпанк",
+        "58": "комодо",
+        "57": "махо-шьоджьо",
+        "9": "меха",
+        "20": "містика",
+        "56": "музичний",
+        "68": "надприродне",
+        "47": "пародія",
+        "3": "пригоди",
+        "69": "психологія",
+        "45": "постапокаліптика",
+        "11": "романтика",
+        "12": "спорт",
+        "55": "шьоджьо-аї",
+        "59": "шьонен-аї",
+        "21": "триллер",
+        "41": "фантастика",
+        "6": "фентезі",
+        "22": "школа",
+        "49": "шьоджьо",
+        "7": "шьонен"
     }
 
     def __init__(self, genre):
         if isinstance(genre, int):
             if genre in self.__cat:
-                self.cat = genre
+                self.cat = genre.lower()
                 self.string = self.__cat[genre]
             else:
                 raise TypeError("There is no such category")
 
         elif isinstance(genre, str):
-            self.cat = self.__get_cat(genre)
+            self.cat = self.__get_cat(genre.lower())
             self.string = genre
 
     def __str__(self):
@@ -80,13 +80,19 @@ class Playlist:
 
 
 class Anime:
-    def __init__(self, session, name, poster, url, description, rating):
+    def __init__(self, session, name, poster, url, description, rating, year, episodes, categories, translation,
+                 voice_actors):
         self.__session = session
         self.name = name
         self.url = url
         self.description = description
         self.rating = rating
         self.poster = poster
+        self.year = year
+        self.episodes = episodes
+        self.categories = categories
+        self.translation = translation
+        self.voice_actors = voice_actors
 
     def get_big_screens(self):
         data = self.__session.get(self.url)
@@ -172,14 +178,30 @@ class AniTube:
                     name = article.find('h2', {'itemprop': 'name'}).a.text
                     url = article.find('h2', {'itemprop': 'name'}).a['href']
                     descr = article.find('div', {'class': 'story_c_text'}).text
+
+                    advanced = article.find('div', {'class': 'story_infa'})
+                    year = advanced.select_one('dt:-soup-contains("Рік виходу аніме:") + a').text
+
+                    episodes_raw = advanced.select_one('dt:-soup-contains("Серій:")').next_sibling.strip()
+                    episodes_raw = [int(n) for n in re.findall(r'\d+', episodes_raw)]
+                    episodes = {'current': episodes_raw[0], 'max': episodes_raw[1], 'duration': episodes_raw[2]}
+
+                    categories = advanced.select_one('dt:-soup-contains("Категорія:")').next_sibling.strip().split(', ')
+                    categories = [Category(n) for n in categories]
+
+                    translation = [link.text for link in advanced.select('dt:-soup-contains("Переклад:") ~ a')]
+                    voice_actors = [link.text for link in advanced.select('dt:-soup-contains("Ролі озвучували:") ~ a')]
+
                     poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
                     rating = [
                         float(x) for x in
                         re.findall(r'\d+\.?\d*', article.find('div', {'class': 'div1'}).text)
                     ]
 
-                    anime = Anime(self.__session, name, poster, url, descr,
-                                  {'score': rating[0], 'max': rating[1], 'votes': rating[2]})
+                    anime = Anime(session=self.__session, name=name, poster=poster, url=url, description=descr,
+                                  rating = {'score': rating[0], 'max': rating[1], 'votes': rating[2]}, year=year,
+                                  episodes=episodes, categories=categories, translation=translation,
+                                  voice_actors=voice_actors)
                     anime_list.append(anime)
 
                     if len(anime_list) == limit:
@@ -229,14 +251,32 @@ class AniTube:
                         name = article.find('h2', {'itemprop': 'name'}).a.text
                         url = article.find('h2', {'itemprop': 'name'}).a['href']
                         descr = article.find('div', {'class': 'story_c_text'}).text
+
+                        advanced = article.find('div', {'class': 'story_infa'})
+                        year = advanced.select_one('dt:-soup-contains("Рік виходу аніме:") + a').text
+
+                        episodes_raw = advanced.select_one('dt:-soup-contains("Серій:")').next_sibling.strip()
+                        episodes_raw = [int(n) for n in re.findall(r'\d+', episodes_raw)]
+                        episodes = {'current': episodes_raw[0], 'max': episodes_raw[1], 'duration': episodes_raw[2]}
+
+                        categories = advanced.select_one('dt:-soup-contains("Категорія:")').next_sibling.strip().split(
+                            ', ')
+                        categories = [Category(n) for n in categories]
+
+                        translation = [link.text for link in advanced.select('dt:-soup-contains("Переклад:") ~ a')]
+                        voice_actors = [link.text for link in
+                                        advanced.select('dt:-soup-contains("Ролі озвучували:") ~ a')]
+
                         poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
                         rating = [
                             float(x) for x in
                             re.findall(r'\d+\.?\d*', article.find('div', {'class': 'div1'}).text)
                         ]
 
-                        anime = Anime(self.__session, name, poster, url, descr,
-                                      {'score': rating[0], 'max': rating[1], 'votes': rating[2]})
+                        anime = Anime(session=self.__session, name=name, poster=poster, url=url, description=descr,
+                                      rating={'score': rating[0], 'max': rating[1], 'votes': rating[2]}, year=year,
+                                      episodes=episodes, categories=categories, translation=translation,
+                                      voice_actors=voice_actors)
                         anime_list.append(anime)
 
                         if len(anime_list) == limit:
@@ -253,9 +293,12 @@ def _set_nested(d, keys, value):
 
 
 def _get_articles(response):
-    soup = BeautifulSoup(response.content, 'html.parser')
-    articles = soup.find('div', {'id': 'dle-content'}).find_all('article', {'class': 'story'})
-    return articles if articles else []
+    try:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        articles = soup.find('div', {'id': 'dle-content'}).find_all('article', {'class': 'story'})
+        return articles if articles else []
+    except:
+        raise TypeError('Error! Site cant be opened.')
 
 
 def _get_url(url, params=None, page=1):
