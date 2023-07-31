@@ -25,28 +25,25 @@ for anime in anime_list:
 ```
 
 ```python
-import anitube as at
+from anitube import AniTube
+import json
 
-api = at.AniTube()
-anime_list = api.search_anime("Я ПЕРЕРОДИВСЯ В ТОРГОВИЙ АВТОМАТ І ТЕПЕР БЛУКАЮ ПІДЗЕМЕЛЛЯМ")
+api = AniTube()
 
-for anime in anime_list:
-    print(anime.name)
-    playlist = anime.get_voices()
-    for ep in playlist:
-        print(f'- {ep.name}')
+anime = api.search_anime("МОБІЛЬНА БРОНЯ ҐАНДАМ: ЗЕТА")[0]
+playlist = anime.get_playlist()
+print(json.dumps(playlist.json, indent=4, ensure_ascii=False))
 
-# Я переродився в торговий автомат і тепер блукаю підземеллям
-# - 1 серія 
-# ...
-# - 4 серія
-# Коли я переродився слизом (ОВА)
-# - Епізод 1 - Гей! Дупці!
-# ...
-# - Епізод 5 - Солодке життя вчителя Рімуру (частина 3)
-# Коли я переродився слизом / Про моє переродження в слиз
-# - Серія 1: Штормовий Дракон Вельдора
-# ...
-# - Серія 24: Куро та Маска
-# - Серія 24.5: Оповіді: Щоденник Вельдори
+# {
+#     "ПЛЕЄР AS***": {
+#         "01. Чорний Ґандам": "https://*.*/*/*",
+#         "02. Відправлення": "https://*.*/*/*",
+#         "03. У капсулі": "https://*.*/*/*",
+#         "04. Рішення Емми": "https://*.*/*/*",
+#         "05. Батько та син": "https://*.*/*/*",
+#         "06. На Землю": "https://*.*/*/*",
+#         "07. Утеча зі Сторони 1": "https://*.*/*/*",
+#         ...
+#     }
+# }
 ```

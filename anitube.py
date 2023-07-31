@@ -102,7 +102,7 @@ class Anime:
         imgs_tag = screen_div.find_all('img')
         return [img['src'] for img in imgs_tag]
 
-    def get_voices(self):
+    def get_playlist(self):
         news_id = self.url.split('/')[-1].split('-')[0]
         data = self.__session.get(
             f"https://anitube.in.ua/engine/ajax/playlists.php",
