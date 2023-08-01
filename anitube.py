@@ -179,18 +179,31 @@ class AniTube:
                     url = article.find('h2', {'itemprop': 'name'}).a['href']
                     descr = article.find('div', {'class': 'story_c_text'}).text
 
+                    year = 2023
+                    episodes = []
+                    voice_actors = []
+                    categories = []
+                    translation = []
+
                     advanced = article.find('div', {'class': 'story_infa'})
-                    year = advanced.select_one('dt:-soup-contains("Рік виходу аніме:") + a').text
-
-                    episodes_raw = advanced.select_one('dt:-soup-contains("Серій:")').next_sibling.strip()
-                    episodes_raw = [int(n) for n in re.findall(r'\d+', episodes_raw)]
-                    episodes = {'current': episodes_raw[0], 'max': episodes_raw[1], 'duration': episodes_raw[2]}
-
-                    categories = advanced.select_one('dt:-soup-contains("Категорія:")').next_sibling.strip().split(', ')
-                    categories = [Category(n) for n in categories]
-
-                    translation = [link.text for link in advanced.select('dt:-soup-contains("Переклад:") ~ a')]
-                    voice_actors = [link.text for link in advanced.select('dt:-soup-contains("Ролі озвучували:") ~ a')]
+                    args = str(advanced).split('<hr/>')
+                    for item in args:
+                        i = BeautifulSoup(item, 'html.parser')
+                        dt = i.find('dt')
+                        if dt is not None:
+                            code = BeautifulSoup(str(i).replace(str(dt), ''), 'html.parser')
+                            match dt.text:
+                                case 'Рік випуску аніме:':
+                                    year = code.find('a').text
+                                case 'Серій:':
+                                    episodes_raw = [int(n) for n in re.findall(r'\d+', code.text)]
+                                    episodes = {'current': episodes_raw[0], 'max': episodes_raw[1]}
+                                case 'Ролі озвучували:':
+                                    voice_actors = [n.text for n in code.find_all('a')]
+                                case 'Категорія:':
+                                    categories = code.text.strip().split(', ')
+                                case 'Переклад:':
+                                    translation = code.text.strip().split(',')
 
                     poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
                     rating = [
@@ -252,20 +265,31 @@ class AniTube:
                         url = article.find('h2', {'itemprop': 'name'}).a['href']
                         descr = article.find('div', {'class': 'story_c_text'}).text
 
+                        year = 2023
+                        episodes = []
+                        voice_actors = []
+                        categories = []
+                        translation = []
+
                         advanced = article.find('div', {'class': 'story_infa'})
-                        year = advanced.select_one('dt:-soup-contains("Рік виходу аніме:") + a').text
-
-                        episodes_raw = advanced.select_one('dt:-soup-contains("Серій:")').next_sibling.strip()
-                        episodes_raw = [int(n) for n in re.findall(r'\d+', episodes_raw)]
-                        episodes = {'current': episodes_raw[0], 'max': episodes_raw[1], 'duration': episodes_raw[2]}
-
-                        categories = advanced.select_one('dt:-soup-contains("Категорія:")').next_sibling.strip().split(
-                            ', ')
-                        categories = [Category(n) for n in categories]
-
-                        translation = [link.text for link in advanced.select('dt:-soup-contains("Переклад:") ~ a')]
-                        voice_actors = [link.text for link in
-                                        advanced.select('dt:-soup-contains("Ролі озвучували:") ~ a')]
+                        args = str(advanced).split('<hr/>')
+                        for item in args:
+                            i = BeautifulSoup(item, 'html.parser')
+                            dt = i.find('dt')
+                            if dt is not None:
+                                code = BeautifulSoup(str(i).replace(str(dt), ''), 'html.parser')
+                                match dt.text:
+                                    case 'Рік випуску аніме:':
+                                        year = code.find('a').text
+                                    case 'Серій:':
+                                        episodes_raw = [int(n) for n in re.findall(r'\d+', code.text)]
+                                        episodes = {'current': episodes_raw[0], 'max': episodes_raw[1]}
+                                    case 'Ролі озвучували:':
+                                        voice_actors = [n.text for n in code.find_all('a')]
+                                    case 'Категорія:':
+                                        categories = code.text.strip().split(', ')
+                                    case 'Переклад:':
+                                        translation = code.text.strip().split(',')
 
                         poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
                         rating = [
