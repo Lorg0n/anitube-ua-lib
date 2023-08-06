@@ -116,6 +116,9 @@ class AniTube:
         self._url = 'https://anitube.in.ua'
         self.__session = requests_cache.CachedSession('cache', expire_after=timedelta(minutes=15))
 
+    def get_session(self):
+        return self.__session
+
     def search_anime(self, search, limit=5):
         anime_list = []
         data = self.__session.post(f'{self._url}/anime/', params={
