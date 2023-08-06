@@ -1,10 +1,10 @@
 import anitube as at
 
 api = at.AniTube()
-anime = api.search_anime('БРЕХУН БРЕХУН')[0]
+animes = api.get_anime(limit=25)
+for anime in animes:
+    print(anime.name)
+    print(anime.get_playlist().json)
 
-voices = anime.get_voices()
-for i in voices:
-    print(i.name, i.voice, i.player, i.types)
 
 

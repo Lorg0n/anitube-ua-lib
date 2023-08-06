@@ -2,7 +2,6 @@ import json
 import math
 import re
 from datetime import timedelta
-from enum import Enum
 
 import requests_cache
 from bs4 import BeautifulSoup
@@ -116,14 +115,15 @@ class Anime:
         ).json()
 
         if data['success']:
+            result = {}
             soup = BeautifulSoup(data['response'], 'html.parser')
             arr = soup.find_all('li', {'data-id': True, 'data-file': True})
-            result = {}
             for item in arr:
-                keys = item['data-id'].split('_')
-                first_key = f"{keys[0]}_{keys[1]}"
-                m = [first_key] + [f"{first_key}_{key}" for key in keys[2:]]
-                m = [soup.find('li', {'data-id': e}).text for e in m]
+                parts = item['data-id'].split("_")
+                r = []
+                for i in range(2, len(parts) + 1):
+                    r.append("_".join(parts[:i]))
+                m = [soup.find('li', {'data-id': e, 'data-file': False}).text for e in r]
                 m.append(item.text)
                 _set_nested(result, m, item['data-file'])
 
@@ -192,18 +192,20 @@ class AniTube:
                         dt = i.find('dt')
                         if dt is not None:
                             code = BeautifulSoup(str(i).replace(str(dt), ''), 'html.parser')
-                            match dt.text:
-                                case 'Рік випуску аніме:':
-                                    year = code.find('a').text
-                                case 'Серій:':
-                                    episodes_raw = [int(n) for n in re.findall(r'\d+', code.text)]
+                            if dt.text == 'Рік випуску аніме:':
+                                year = code.find('a').text
+                            elif dt.text == 'Серій:':
+                                episodes_raw = [int(n) for n in re.findall(r'\d+', code.text)]
+                                if len(episodes_raw) >= 2:
                                     episodes = {'current': episodes_raw[0], 'max': episodes_raw[1]}
-                                case 'Ролі озвучували:':
-                                    voice_actors = [n.text for n in code.find_all('a')]
-                                case 'Категорія:':
-                                    categories = code.text.strip().split(', ')
-                                case 'Переклад:':
-                                    translation = code.text.strip().split(',')
+                                else:
+                                    episodes = {'current': None, 'max': None}
+                            elif dt.text == 'Ролі озвучували:':
+                                voice_actors = [n.text for n in code.find_all('a')]
+                            elif dt.text == 'Категорія:':
+                                categories = code.text.strip().split(', ')
+                            elif dt.text == 'Переклад:':
+                                translation = code.text.strip().split(', ')
 
                     poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
                     rating = [
@@ -278,18 +280,20 @@ class AniTube:
                             dt = i.find('dt')
                             if dt is not None:
                                 code = BeautifulSoup(str(i).replace(str(dt), ''), 'html.parser')
-                                match dt.text:
-                                    case 'Рік випуску аніме:':
-                                        year = code.find('a').text
-                                    case 'Серій:':
-                                        episodes_raw = [int(n) for n in re.findall(r'\d+', code.text)]
+                                if dt.text == 'Рік випуску аніме:':
+                                    year = code.find('a').text
+                                elif dt.text == 'Серій:':
+                                    episodes_raw = [int(n) for n in re.findall(r'\d+', code.text)]
+                                    if len(episodes_raw) >= 2:
                                         episodes = {'current': episodes_raw[0], 'max': episodes_raw[1]}
-                                    case 'Ролі озвучували:':
-                                        voice_actors = [n.text for n in code.find_all('a')]
-                                    case 'Категорія:':
-                                        categories = code.text.strip().split(', ')
-                                    case 'Переклад:':
-                                        translation = code.text.strip().split(',')
+                                    else:
+                                        episodes = {'current': None, 'max': None}
+                                elif dt.text == 'Ролі озвучували:':
+                                    voice_actors = [n.text for n in code.find_all('a')]
+                                elif dt.text == 'Категорія:':
+                                    categories = code.text.strip().split(', ')
+                                elif dt.text == 'Переклад:':
+                                    translation = code.text.strip().split(', ')
 
                         poster = f"{self._url}{article.find('span', {'class': 'story_post'}).find('img')['src']}"
                         rating = [
