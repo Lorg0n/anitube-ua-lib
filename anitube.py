@@ -108,43 +108,7 @@ class Anime:
         return [img['src'] for img in imgs_tag]
 
     def get_playlist(self):
-        news_id = self.url.split('/')[-1].split('-')[0]
-        data = self.__session.get(
-            f"https://anitube.in.ua/engine/ajax/playlists.php",
-            params={'news_id': news_id, 'xfield': 'playlist'}
-        ).json()
-
-        if data['success']:
-            result = {}
-            soup = BeautifulSoup(data['response'], 'html.parser')
-            arr = soup.find_all('li', {'data-id': True, 'data-file': True})
-            for item in arr:
-                parts = item['data-id'].split("_")
-                r = []
-                for i in range(2, len(parts) + 1):
-                    r.append("_".join(parts[:i]))
-                m = [soup.find('li', {'data-id': e, 'data-file': False}).text for e in r]
-                m.append(item.text)
-                _set_nested(result, m, item['data-file'])
-
-            return Playlist(session=self.__session, structure=result)
-
-        else:
-            data = self.__session.get(self.url)
-            soup = BeautifulSoup(data.content, 'html.parser')
-            result = {}
-
-            for script in soup.find_all('script'):
-                js_code = script.text
-                if "RalodePlayer.init" in js_code:
-                    raw_args = "[" + re.search(r'RalodePlayer\.init\((.*?)\);', js_code).group(1) + "]"
-                    args = json.loads(raw_args)
-                    for p in range(len(args[1])):
-                        for e in range(len(args[1][p])):
-                            item = args[1][p][e]
-                            _set_nested(result, [args[0][p], item['name']], BeautifulSoup(item['code'], 'html.parser').find('iframe')['src'])
-
-            return Playlist(self.__session, result)
+        return _get_playlist(self.__session, self.url)
 
 
 class AniTube:
@@ -312,6 +276,47 @@ class AniTube:
             except BreakLoops:
                 pass
         return anime_list
+
+
+def _get_playlist(session, url):
+    news_id = url.split('/')[-1].split('-')[0]
+    data = session.get(
+        f"https://anitube.in.ua/engine/ajax/playlists.php",
+        params={'news_id': news_id, 'xfield': 'playlist'}
+    ).json()
+
+    if data['success']:
+        result = {}
+        soup = BeautifulSoup(data['response'], 'html.parser')
+        arr = soup.find_all('li', {'data-id': True, 'data-file': True})
+        for item in arr:
+            parts = item['data-id'].split("_")
+            r = []
+            for i in range(2, len(parts) + 1):
+                r.append("_".join(parts[:i]))
+            m = [soup.find('li', {'data-id': e, 'data-file': False}).text for e in r]
+            m.append(item.text)
+            _set_nested(result, m, item['data-file'])
+
+        return Playlist(session=session, structure=result)
+
+    else:
+        data = session.get(url)
+        soup = BeautifulSoup(data.content, 'html.parser')
+        result = {}
+
+        for script in soup.find_all('script'):
+            js_code = script.text
+            if "RalodePlayer.init" in js_code:
+                raw_args = "[" + re.search(r'RalodePlayer\.init\((.*?)\);', js_code).group(1) + "]"
+                args = json.loads(raw_args)
+                for p in range(len(args[1])):
+                    for e in range(len(args[1][p])):
+                        item = args[1][p][e]
+                        _set_nested(result, [args[0][p], item['name']],
+                                    BeautifulSoup(item['code'], 'html.parser').find('iframe')['src'])
+
+        return Playlist(session, result)
 
 
 def _set_nested(d, keys, value):
