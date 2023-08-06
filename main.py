@@ -1,7 +1,10 @@
-from anitube import AniTube
+import anitube as at
 
-api = AniTube()
+api = at.AniTube()
+anime = api.search_anime('БРЕХУН БРЕХУН')[0]
 
-animes = api.search_anime(search="Демон", limit=5)
-for anime in animes:
-    print(anime.name)
+voices = anime.get_voices()
+for i in voices:
+    print(i.name, i.voice, i.player, i.types)
+
+
