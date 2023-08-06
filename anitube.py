@@ -316,8 +316,14 @@ def _get_playlist(session, url):
                 for p in range(len(args[1])):
                     for e in range(len(args[1][p])):
                         item = args[1][p][e]
-                        _set_nested(result, [args[0][p], item['name']],
-                                    BeautifulSoup(item['code'], 'html.parser').find('iframe')['src'])
+                        match = re.search(r'https?://[^"\s]+', item['code'])
+                        url = ''
+                        if match:
+                            url = match.group()
+                        else:
+                            print("URL not found")
+
+                        _set_nested(result, [args[0][p], item['name']], url)
 
         return Playlist(session, result)
 
