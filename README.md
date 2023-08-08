@@ -1,49 +1,53 @@
 # anitube-ua-lib
 
-## Description
-- Parser for data from the site anitube.in.ua (EN)
-- Парсер даних з сайту anitube.in.ua (UA)
+Python library for working with [AniTube](https://anitube.in.ua/) - anime resource 
 
-## Required Libraries
-- beautifulsoup4
-- requests-cache
+## Installation
 
-## Examples
-```python
-import anitube as at
-
-api = at.AniTube()
-category_a = at.Category('Антиутопія')
-category_b = 16  # Драма
-anime_list = api.get_anime(cat=[category_a, category_b])
-
-for anime in anime_list:
-    print(anime.name)
-
-# Богиня з косичками
-# Подорож Кіно. Чарівний світ (2 сезон)
+```bash
+pip install anitube-ua-lib
 ```
 
+## Usage
 ```python
-from anitube import AniTube
-import json
+# Import the library:
+from anitube_ua_lib import AniTube
 
-api = AniTube()
+# Initialize:
+anitube = AniTube()
 
-anime = api.search_anime("МОБІЛЬНА БРОНЯ ҐАНДАМ: ЗЕТА")[0]
+# Search for anime:
+results = anitube.search_anime("naruto", limit=10)
+
+# Get anime details:
+anime = results[0]
+print(anime.name)
+print(anime.description) 
+print(anime.rating)
+
+# Get anime screenshots:
+screens = anime.get_big_screens() 
+# or
+screens = anime.get_small_screens()
+
+# Get anime playlist:
 playlist = anime.get_playlist()
-print(json.dumps(playlist.json, indent=4, ensure_ascii=False))
+print(playlist.json)
 
-# {
-#     "ПЛЕЄР AS***": {
-#         "01. Чорний Ґандам": "https://*.*/*/*",
-#         "02. Відправлення": "https://*.*/*/*",
-#         "03. У капсулі": "https://*.*/*/*",
-#         "04. Рішення Емми": "https://*.*/*/*",
-#         "05. Батько та син": "https://*.*/*/*",
-#         "06. На Землю": "https://*.*/*/*",
-#         "07. Утеча зі Сторони 1": "https://*.*/*/*",
-#         ...
-#     }
-# }
+# Get anime list by filters:
+anime_list = anitube.get_anime(
+    cat=[6, 22],
+    year=[2010, 2020], 
+    sort='rating'
+)
 ```
+
+## Description
+anitube-ua-lib is a Python library for convenient work with AniTube anime resource.
+
+It allows you to:
+- Search anime
+- Get anime details like description, rating, categories, etc
+- Get anime screenshots
+- Get anime playlist (video links)
+- Get anime list by filters: category, release year, rating, etc
