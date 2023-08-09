@@ -2,16 +2,10 @@
 
 Python library for working with [AniTube](https://anitube.in.ua/) - anime resource 
 
-## Installation
-
-```bash
-pip install anitube-ua-lib
-```
-
 ## Usage
 ```python
 # Import the library:
-from anitube_ua_lib import AniTube
+from anitube import AniTube
 
 # Initialize:
 anitube = AniTube()
