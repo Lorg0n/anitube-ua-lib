@@ -191,11 +191,11 @@ class AniTube:
     """Клас для роботи з сайтом AniTube"""
 
     def __init__(self):
-        self.session = requests.Session()
+        self.__session = requests.Session()
 
     def login(self, login_name, login_password):
         """Логін користувача"""
-        acc = Account(self.session, login_name, login_password)
+        acc = Account(self.__session, login_name, login_password)
         return acc
     
     def get_session(self):
