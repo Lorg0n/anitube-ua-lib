@@ -1,0 +1,9 @@
+README.md
+setup.py
+anitube/__init__.py
+anitube/anitube.py
+anitube.egg-info/PKG-INFO
+anitube.egg-info/SOURCES.txt
+anitube.egg-info/dependency_links.txt
+anitube.egg-info/requires.txt
+anitube.egg-info/top_level.txt

@@ -1,6 +1,11 @@
-# anitube-ua-lib
+# anitube
 
 Python library for working with [AniTube](https://anitube.in.ua/) - anime resource 
+
+## Installing
+```
+pip install git+https://github.com/Lorg0n/anitube-ua-lib/
+```
 
 ## Usage
 ```python
@@ -9,7 +14,8 @@ from anitube import AniTube
 
 # Initialize:
 anitube = AniTube()
-
+# Log in
+anitube.login("test", "qwerty")
 # Search for anime:
 results = anitube.search_anime("naruto", limit=10)
 
