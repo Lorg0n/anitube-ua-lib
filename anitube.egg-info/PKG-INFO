@@ -1,8 +1,0 @@
-Metadata-Version: 2.1
-Name: anitube
-Version: 0.1.1
-Summary: Library that parses data from the site anitube.in.ua
-Author: Lorg0n
-Author-email: lorgon.kv@gmail.com
-Requires-Python: >=3.6
-Description-Content-Type: text/markdown
