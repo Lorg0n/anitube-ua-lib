@@ -1,7 +1,6 @@
 import json
 import logging
 import math
-import os
 import re
 
 import requests
@@ -11,67 +10,72 @@ logging.basicConfig(level=logging.DEBUG)
 ANITUBE_BASE = "https://anitube.in.ua"
 
 
-class Account:
-    """Клас акаунту користувача"""
-
-    def __init__(self, __session, login_name, login_password):
-        """Ініціалізація акаунту"""
-        self.group = None
-        self.registration = None
-        self.last_visit = None
-
-        self.login_name = login_name
-        self.login_password = login_password
-        self.__session = __session
-        self.COOKIE_PATH = "./temp/cookie.txt"
-        self.login()
-        self.get_information()
-
-    def send_message(self, message):
-        """Відправка повідомлення в чат"""
-        data = {
-            'do': 'add',
-            'text': message,
-            'page_id': '',
-        }
-        self.__session.post(f"{ANITUBE_BASE}/engine/ajax/controller.php?mod=light_chat", data=data)
-
-    def get_information(self):
-        """Отримання інформації про акаунт з сайту"""
-        r = self.__session.get(f"{ANITUBE_BASE}/user/{self.login_name}/")
-        soup = BeautifulSoup(r.content, 'html.parser')
-        for item in soup.select("div.user_info_r strong"):
-            name = item.text
-            parent = item.parent
-            args = parent.text.split(" ")
-            if name == "Група:":
-                self.group = args[1]
-            elif name == "Реєстрація:":
-                self.registration = ' '.join(args[1:])
-            elif name == "Останнє відвідування:":
-                self.last_visit = ' '.join(args[2:])
-
-    def login(self):
-        """Логін користувача"""
-        if not os.path.exists(self.COOKIE_PATH):
-            logging.info("No cookie file.")
-            r = self.__session.post(
-                f"{ANITUBE_BASE}",
-                data={
-                    "login": "submit",
-                    "login_name": self.login_name,
-                    "login_password": self.login_password,
-                }
-            )
-            if r.text.find('lorg0n'):
-                with open(self.COOKIE_PATH, "w") as f:
-                    json.dump(self.__session.cookies.get_dict(), f)
-
-        else:
-            logging.info("Loading cookie file.")
-            with open(self.COOKIE_PATH, "r") as f:
-                self.__session.cookies.update(json.load(f))
-
+# class Account:
+#     """Клас акаунту користувача"""
+#
+#     def __init__(self, __session, login_name, login_password):
+#         """Ініціалізація акаунту"""
+#         self.group = None
+#         self.registration = None
+#         self.last_visit = None
+#
+#         self.login_name = login_name
+#         self.login_password = login_password
+#         self.__session = __session
+#         self.COOKIE_PATH = "./temp/cookie.txt"
+#         self.login()
+#         self.get_information()
+#
+#     def send_message(self, message):
+#         """Відправка повідомлення в чат"""
+#         data = {
+#             'do': 'add',
+#             'text': message,
+#             'page_id': '',
+#         }
+#         self.__session.post(f"{ANITUBE_BASE}/engine/ajax/controller.php?mod=light_chat", data=data)
+#
+#     def get_information(self):
+#         """Отримання інформації про акаунт з сайту"""
+#         r = self.__session.get(f"{ANITUBE_BASE}/user/{self.login_name}/")
+#         soup = BeautifulSoup(r.content, 'html.parser')
+#         for item in soup.select("div.user_info_r strong"):
+#             name = item.text
+#             parent = item.parent
+#             args = parent.text.split(" ")
+#             if name == "Група:":
+#                 self.group = args[1]
+#             elif name == "Реєстрація:":
+#                 self.registration = ' '.join(args[1:])
+#             elif name == "Останнє відвідування:":
+#                 self.last_visit = ' '.join(args[2:])
+#
+#     def login(self):
+#         """Логін користувача"""
+#
+#         file_name = Path(self.COOKIE_PATH)
+#         if file_name.exists():
+#             with open(self.COOKIE_PATH, 'r') as f:
+#                 cookies = requests.utils.cookiejar_from_dict(f.read())
+#                 self.__session.cookies = cookies
+#         else:
+#             r = self.__session.post(
+#                 f"{ANITUBE_BASE}",
+#                 data={
+#                     "login": "submit",
+#                     "login_name": self.login_name,
+#                     "login_password": self.login_password,
+#                 }
+#             )
+#             content = r.content
+#
+#             if str(content).find("https://anitube.in.ua/user/lorg0n/") != -1:
+#                 with open(self.COOKIE_PATH, 'w') as f:
+#                     f.write(requests.utils.dict_from_cookiejar(self.__session.cookies))
+#             else:
+#                 print('Account error!')
+#             print(content)
+#
 
 class Category:
     """Клас категорії аніме"""
@@ -193,10 +197,10 @@ class AniTube:
     def __init__(self):
         self.__session = requests.Session()
 
-    def login(self, login_name, login_password):
-        """Логін користувача"""
-        acc = Account(self.__session, login_name, login_password)
-        return acc
+    # def login(self, login_name, login_password):
+    #     """Логін користувача"""
+    #     acc = Account(self.__session, login_name, login_password)
+    #     return acc
     
     def get_session(self):
         """Отримання сесії"""

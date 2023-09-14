@@ -14,8 +14,6 @@ from anitube import AniTube
 
 # Initialize:
 anitube = AniTube()
-# Log in
-anitube.login("test", "qwerty")
 # Search for anime:
 results = anitube.search_anime("naruto", limit=10)
 
